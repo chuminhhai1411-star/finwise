@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finwise - Quản Trị Tài Chính Cá Nhân</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="ph ph-wallet"></i>
+                <span>Finwise</span>
+            </div>
+            <nav class="nav-links">
+                <a href="#" class="nav-item active" data-target="dashboard">
+                    <i class="ph ph-squares-four"></i> Tổng quan
+                </a>
+                <a href="#" class="nav-item" data-target="add-transaction">
+                    <i class="ph ph-plus-circle"></i> Thêm giao dịch
+                </a>
+                <a href="#" class="nav-item" data-target="history">
+                    <i class="ph ph-clipboard-text"></i> Lịch sử
+                </a>
+                <a href="#" class="nav-item" data-target="reports">
+                    <i class="ph ph-chart-line-up"></i> Báo cáo
+                </a>
+                <a href="#" class="nav-item" data-target="investments">
+                    <i class="ph ph-briefcase"></i> Đầu tư
+                </a>
+                <a href="#" class="nav-item" data-target="categories">
+                    <i class="ph ph-folder-notch"></i> Danh mục
+                </a>
+                <a href="#" class="nav-item" data-target="settings">
+                    <i class="ph ph-gear"></i> Cài đặt
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <p class="month-label" id="current-month-label">Tháng ...</p>
+                <h3 class="month-expense" id="current-month-expense">0 đ</h3>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="header-left">
+                    <h2 id="page-title">Tổng quan</h2>
+                    <span class="current-date-display" id="header-date">...</span>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-outline" id="btn-export-pdf">
+                        <i class="ph ph-file-pdf"></i> Xuất Báo Cáo PDF
+                    </button>
+                    <div class="avatar">
+                        <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix&backgroundColor=c9a84c" alt="Avatar">
+                    </div>
+                </div>
+            </header>
+
+            <div class="page-container">
+                <!-- Dashboard Page -->
+                <section id="dashboard" class="page active">
+                    <!-- KPI Cards -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card glass-card">
+                            <div class="kpi-icon text-green"><i class="ph ph-arrow-down-left"></i></div>
+                            <p class="kpi-label">Thu nhập (Tháng này)</p>
+                            <h3 class="kpi-value text-green" id="kpi-income">0 ₫</h3>
+                            <p class="kpi-compare"><i class="ph ph-trend-up"></i> <span id="kpi-income-compare">0%</span> so với tháng trước</p>
+                        </div>
+                        <div class="kpi-card glass-card">
+                            <div class="kpi-icon text-red"><i class="ph ph-arrow-up-right"></i></div>
+                            <p class="kpi-label">Chi tiêu (Tháng này)</p>
+                            <h3 class="kpi-value text-red" id="kpi-expense">0 ₫</h3>
+                            <p class="kpi-compare"><i class="ph ph-trend-down"></i> <span id="kpi-expense-compare">0%</span> so với tháng trước</p>
+                        </div>
+                        <div class="kpi-card glass-card">
+                            <div class="kpi-icon text-gold"><i class="ph ph-coins"></i></div>
+                            <p class="kpi-label">Số dư hiện tại</p>
+                            <h3 class="kpi-value text-gold" id="kpi-balance">0 ₫</h3>
+                            <p class="kpi-compare">Tổng quan tài khoản</p>
+                        </div>
+                        <div class="kpi-card glass-card">
+                            <div class="kpi-icon text-blue"><i class="ph ph-receipt"></i></div>
+                            <p class="kpi-label">Số giao dịch</p>
+                            <h3 class="kpi-value text-blue" id="kpi-tx-count">0</h3>
+                            <p class="kpi-compare">Đã thực hiện</p>
+                        </div>
+                        <div class="kpi-card glass-card">
+                            <div class="kpi-icon" style="color: #ab6bff"><i class="ph ph-briefcase"></i></div>
+                            <p class="kpi-label">Đầu tư</p>
+                            <h3 class="kpi-value" style="color: #ab6bff" id="kpi-inv-value">0 ₫</h3>
+                            <p class="kpi-compare">Lãi/Lỗ: <span id="kpi-inv-pl" style="margin-left:4px;font-weight:bold;">0%</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Charts Area -->
+                    <div class="charts-grid-top">
+                        <div class="chart-card line-chart-container glass-card">
+                            <h3>Thu / Chi 6 tháng gần nhất</h3>
+                            <div style="height: 300px; width: 100%;">
+                                <canvas id="mainChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-bottom-grid">
+                        <div class="chart-card doughnut-chart-container glass-card">
+                            <h3>Phân bổ chi tiêu</h3>
+                            <div style="height: 250px; position: relative; width: 100%; display: flex; justify-content: center;">
+                                <canvas id="doughnutChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="recent-transactions glass-card">
+                            <div class="card-header">
+                                <h3>Giao dịch gần nhất</h3>
+                                <a href="#" class="view-all" data-target="history">Xem tất cả</a>
+                            </div>
+                            <div class="transaction-list" id="recent-transactions-list">
+                                <!-- JS injected -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Add Transaction Page -->
+                <section id="add-transaction" class="page">
+                    <div class="glass-card form-container">
+                        <div class="card-header">
+                            <h3>Thêm giao dịch mới</h3>
+                        </div>
+                        <form id="transaction-form" class="transaction-form">
+                            <div class="form-grid">
+                                <div class="form-group type-toggle-group">
+                                    <label>Loại giao dịch</label>
+                                    <div class="type-toggle">
+                                        <input type="radio" id="type-expense" name="tx-type" value="expense" checked>
+                                        <label for="type-expense">💸 Chi tiêu</label>
+                                        <input type="radio" id="type-income" name="tx-type" value="income">
+                                        <label for="type-income">💰 Thu nhập</label>
+                                        <div class="toggle-bg"></div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tx-amount">Số tiền (<span class="text-gold">₫</span>)</label>
+                                    <input type="text" id="tx-amount" placeholder="0" required class="amount-input">
+                                    <div class="quick-amounts">
+                                        <button type="button" class="btn-quick">+50k</button>
+                                        <button type="button" class="btn-quick">+100k</button>
+                                        <button type="button" class="btn-quick">+200k</button>
+                                        <button type="button" class="btn-quick">+500k</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label>Danh mục</label>
+                                    <div class="category-grid" id="category-grid-picker">
+                                        <!-- JS injected -->
+                                    </div>
+                                    <input type="hidden" id="tx-category" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="tx-date">Ngày giờ</label>
+                                    <input type="datetime-local" id="tx-date" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="tx-title">Tiêu đề</label>
+                                    <input type="text" id="tx-title" placeholder="VD: Mua sắm siêu thị..." required>
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label>Hình thức</label>
+                                    <div class="radio-pills">
+                                        <input type="radio" id="pay-cash" name="tx-payment" value="cash" checked>
+                                        <label for="pay-cash">Tiền mặt</label>
+                                        <input type="radio" id="pay-card" name="tx-payment" value="card">
+                                        <label for="pay-card">Thẻ NH</label>
+                                        <input type="radio" id="pay-ewallet" name="tx-payment" value="ewallet">
+                                        <label for="pay-ewallet">Ví điện tử</label>
+                                        <input type="radio" id="pay-other" name="tx-payment" value="other">
+                                        <label for="pay-other">Khác</label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label for="tx-note">Ghi chú & Tags</label>
+                                    <textarea id="tx-note" rows="2" placeholder="Thêm ghi chú cá nhân, hỗ trợ hashtag (#cà-phê)"></textarea>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-submit full-width-btn" id="btn-save-tx">
+                                <i class="ph ph-floppy-disk"></i> Lưu Giao Dịch
+                            </button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- History Page -->
+                <section id="history" class="page">
+                    <div class="glass-card mb-24">
+                        <div class="history-filters">
+                            <input type="text" id="history-search" placeholder="🔍 Tìm kiếm giao dịch...">
+                            <select id="history-type-filter">
+                                <option value="all">Tất cả loại</option>
+                                <option value="expense">Khoản chi</option>
+                                <option value="income">Khoản thu</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="glass-card">
+                        <div class="history-header">
+                            <h3>Danh sách giao dịch</h3>
+                        </div>
+                        <div class="transaction-list" id="full-history-list">
+                            <!-- JS injected -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Reports Page -->
+                <section id="reports" class="page">
+                    <div class="reports-header glass-card">
+                        <div class="report-filters">
+                            <button class="btn btn-outline" id="prev-period"><i class="ph ph-caret-left"></i></button>
+                            <div class="period-display" id="report-period-label" style="font-weight:bold; font-size: 18px;">Tháng này</div>
+                            <button class="btn btn-outline" id="next-period"><i class="ph ph-caret-right"></i></button>
+                        </div>
+                        <div class="period-type-toggle radio-pills">
+                            <input type="radio" id="period-month" name="report-period" value="month" checked>
+                            <label for="period-month">Tháng</label>
+                            <input type="radio" id="period-year" name="report-period" value="year">
+                            <label for="period-year">Năm</label>
+                        </div>
+                    </div>
+
+                    <div class="kpi-grid" style="margin-top: 24px;">
+                        <div class="kpi-card glass-card">
+                            <p class="kpi-label">Tổng Thu</p>
+                            <h3 class="kpi-value text-green" id="report-total-income">0 ₫</h3>
+                        </div>
+                        <div class="kpi-card glass-card">
+                            <p class="kpi-label">Tổng Chi</p>
+                            <h3 class="kpi-value text-red" id="report-total-expense">0 ₫</h3>
+                        </div>
+                        <div class="kpi-card glass-card">
+                            <p class="kpi-label">Tiết Kiệm</p>
+                            <h3 class="kpi-value text-gold" id="report-total-savings">0 ₫</h3>
+                        </div>
+                        <div class="kpi-card glass-card">
+                            <p class="kpi-label">Tỷ Lệ Tiết Kiệm</p>
+                            <h3 class="kpi-value text-blue" id="report-savings-rate">0%</h3>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-bottom-grid">
+                        <div class="chart-card glass-card">
+                            <h3>Xu hướng chi tiêu</h3>
+                            <div style="height: 250px; width: 100%;">
+                                <canvas id="reportLineChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card glass-card">
+                            <h3>Cơ cấu chi tiêu</h3>
+                            <div style="height: 250px; position: relative; width: 100%; display: flex; justify-content: center;">
+                                <canvas id="reportDoughnutChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Investments Page -->
+                <section id="investments" class="page">
+                    <!-- KPI Cards -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card glass-card">
+                            <p class="kpi-label">Tổng vốn đầu tư</p>
+                            <h3 class="kpi-value text-blue" id="inv-total-cost">0 ₫</h3>
+                            <p class="kpi-compare">Vốn gốc</p>
+                        </div>
+                        <div class="kpi-card glass-card">
+                            <p class="kpi-label">Giá trị hiện tại</p>
+                            <h3 class="kpi-value text-gold" id="inv-current-value">0 ₫</h3>
+                            <p class="kpi-compare">Tổng tài sản ròng</p>
+                        </div>
+                        <div class="kpi-card glass-card">
+                            <p class="kpi-label">Lãi/Lỗ (Tổng)</p>
+                            <h3 class="kpi-value" id="inv-total-pl">0 ₫</h3>
+                            <p class="kpi-compare">ROI: <span id="inv-total-roi" style="margin-left:4px; font-weight:bold">0%</span></p>
+                        </div>
+                        <div class="kpi-card glass-card">
+                            <p class="kpi-label">Số tài sản</p>
+                            <h3 class="kpi-value" style="color: #ab6bff" id="inv-asset-count">0</h3>
+                            <p class="kpi-compare">Đang nắm giữ</p>
+                        </div>
+                    </div>
+
+                    <!-- Mini Charts -->
+                    <div class="dashboard-bottom-grid mb-24">
+                        <div class="chart-card glass-card">
+                            <div class="card-header" style="margin-bottom:0px;">
+                                <h3 style="font-size: 16px;">Tăng trưởng danh mục</h3>
+                            </div>
+                            <div style="height: 200px; width: 100%;">
+                                <canvas id="invLineChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card glass-card">
+                            <div class="card-header" style="margin-bottom:0px;">
+                                <h3 style="font-size: 16px;">Cơ cấu tải sản</h3>
+                            </div>
+                            <div style="height: 200px; position: relative; width: 100%; display: flex; justify-content: center;">
+                                <canvas id="invDoughnutChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Asset List -->
+                    <div class="glass-card mb-24">
+                        <div class="card-header">
+                            <h3>Danh sách tài sản</h3>
+                            <button class="btn btn-primary" onclick="window.openAddAssetModal()"><i class="ph ph-plus"></i> Thêm Tài Sản</button>
+                        </div>
+                        <div class="asset-grid-list" id="asset-list-container">
+                            <!-- JS Injected Assets -->
+                        </div>
+                    </div>
+
+                    <!-- Insights -->
+                    <div class="glass-card mb-24">
+                        <div class="card-header">
+                            <h3>Phân tích & Khuyến nghị</h3>
+                        </div>
+                        <div class="insights-grid" id="inv-insights-container">
+                            <!-- JS Injected Insights -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Categories Page -->
+                <section id="categories" class="page">
+                    <div class="form-grid">
+                        <div class="glass-card">
+                            <h3>Thêm danh mục</h3>
+                            <form id="add-category-form" class="mt-16">
+                                <div class="form-group mb-16">
+                                    <label>Loại</label>
+                                    <select id="new-cat-type" required>
+                                        <option value="expense">Khoản chi</option>
+                                        <option value="income">Khoản thu</option>
+                                    </select>
+                                </div>
+                                <div class="form-group mb-16">
+                                    <label>Icon (Emoji)</label>
+                                    <input type="text" id="new-cat-icon" placeholder="VD: 🍔" required maxlength="2">
+                                </div>
+                                <div class="form-group mb-16">
+                                    <label>Tên danh mục</label>
+                                    <input type="text" id="new-cat-name" placeholder="VD: Ăn vặt" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary full-width-btn">Thêm mới</button>
+                            </form>
+                        </div>
+                        <div class="glass-card">
+                            <h3>Danh sách danh mục</h3>
+                            <div class="category-manager-grid mt-16" id="category-manager-list">
+                                <!-- JS injected -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Settings Page -->
+                <section id="settings" class="page">
+                    <div class="form-container">
+                        <div class="glass-card mb-24">
+                            <h3>Tuỳ chỉnh hiển thị</h3>
+                            <div class="settings-row mt-16">
+                                <div>
+                                    <h4>Tiền tệ hiển thị</h4>
+                                    <p class="text-muted text-sm">Chọn ký hiệu tiền tệ (₫, $, €)</p>
+                                </div>
+                                <select id="setting-currency" class="settings-select">
+                                    <option value="VND">VNĐ (₫)</option>
+                                    <option value="USD">USD ($)</option>
+                                    <option value="EUR">EUR (€)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="glass-card mb-24">
+                            <h3>Dữ liệu</h3>
+                            <div class="settings-row mt-16 border-bottom pb-16">
+                                <div>
+                                    <h4>Xuất dữ liệu</h4>
+                                    <p class="text-muted text-sm">Tải xuống toàn bộ dữ liệu (JSON)</p>
+                                </div>
+                                <button id="btn-export-data" class="btn btn-outline"><i class="ph ph-download-simple"></i> Xuất</button>
+                            </div>
+                            <div class="settings-row mt-16 border-bottom pb-16">
+                                <div>
+                                    <h4 class="text-blue">Tạo dữ liệu mẫu</h4>
+                                    <p class="text-muted text-sm">Tự động sinh 20 giao dịch mẫu lên Firebase</p>
+                                </div>
+                                <button id="btn-seed-data" class="btn btn-primary" onclick="window.seedFirebase()"><i class="ph ph-magic-wand"></i> Tạo dữ liệu</button>
+                            </div>
+                            <div class="settings-row mt-16">
+                                <div>
+                                    <h4 class="text-red">Xóa toàn bộ dữ liệu</h4>
+                                    <p class="text-muted text-sm">Hành động này không thể hoàn tác</p>
+                                </div>
+                                <button id="btn-clear-data" class="btn btn-outline" style="color:var(--accent-red); border-color:var(--accent-red)"><i class="ph ph-trash"></i> Xoá</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
