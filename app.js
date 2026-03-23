@@ -59,7 +59,7 @@ const showToast = (message, type = 'success') => {
 
 // State Management
 let transactions = [];
-let categories = {};
+let categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
 let investments = [];
 let investmentTransactions = [];
 let priceHistory = [];
@@ -535,6 +535,11 @@ const renderCategoryPicker = (type) => {
         `;
         
         item.addEventListener('click', () => {
+            if (cat.label === 'Khác' && cat.icon === '➕') {
+                document.querySelector('.nav-item[data-target="categories"]').click();
+                showToast('Bạn có thể tạo thêm danh mục mới ở đây nhé.', 'info');
+                return;
+            }
             document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('selected'));
             item.classList.add('selected');
             document.getElementById('tx-category').value = cat.id;
@@ -564,7 +569,18 @@ const saveTransaction = () => {
     const note = document.getElementById('tx-note').value.trim();
     const paymentMethod = document.querySelector('input[name="tx-payment"]:checked').value;
     
-    const catDetails = categories[type].find(c => c.id === categoryId);
+    if (!categoryId) {
+        showToast('Vui lòng chọn danh mục giao dịch!', 'error');
+        return;
+    }
+    
+    const catList = categories[type] || [];
+    const catDetails = catList.find(c => c.id === categoryId);
+    
+    if (!catDetails) {
+        showToast('Lỗi: Không tìm thấy danh mục này.', 'error');
+        return;
+    }
     
     const tags = [];
     const hashRegex = /#[\w\u00C0-\u1EF9]+/g;
