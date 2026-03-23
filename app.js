@@ -764,7 +764,17 @@ const renderReports = () => {
             responsive: true,
             maintainAspectRatio: false,
             cutout: '70%',
-            const processEmail = (input) => {
+            plugins: {
+                legend: { position: 'right' }
+            }
+        }
+    });
+};
+
+let isAppInitialized = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const processEmail = (input) => {
         const str = input.trim();
         if (str.includes('@')) return str;
         return str + '@finwise-user.com';
