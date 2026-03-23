@@ -834,10 +834,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('btn-login-facebook').addEventListener('click', () => {
         signInWithPopup(auth, facebookProvider).catch(err => showToast('Lỗi Facebook: ' + err.message, 'error'));
-    });h(err => showToast(err.message, 'error'));
-    });
-    document.getElementById('btn-login-facebook').addEventListener('click', () => {
-        signInWithPopup(auth, facebookProvider).catch(err => showToast(err.message, 'error'));
     });
     document.getElementById('btn-logout').addEventListener('click', () => {
         signOut(auth);
