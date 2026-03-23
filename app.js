@@ -1,6 +1,6 @@
 import { db, auth, googleProvider, facebookProvider } from './firebase.js';
 import { collection, onSnapshot, addDoc, doc, setDoc, deleteDoc, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { signInWithPopup, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 // Data Models & Constants
 const DEFAULT_CATEGORIES = {
@@ -775,6 +775,34 @@ let isAppInitialized = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     // Auth listeners
+    document.getElementById('email-auth-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('auth-email').value;
+        const password = document.getElementById('auth-password').value;
+        signInWithEmailAndPassword(auth, email, password)
+            .then(() => showToast('Đăng nhập thành công!'))
+            .catch(err => {
+                showToast('Sai email hoặc mật khẩu!', 'error');
+                console.error(err);
+            });
+    });
+
+    document.getElementById('btn-register-email').addEventListener('click', () => {
+        const email = document.getElementById('auth-email').value;
+        const password = document.getElementById('auth-password').value;
+        if (!email || password.length < 6) {
+            showToast('Vui lòng nhập email hợp lệ và mật khẩu ít nhất 6 ký tự', 'error');
+            return;
+        }
+        createUserWithEmailAndPassword(auth, email, password)
+            .then(() => showToast('Tạo tài khoản thành công!'))
+            .catch(err => {
+                if (err.code === 'auth/email-already-in-use') showToast('Email này đã được sử dụng!', 'error');
+                else if (err.code === 'auth/operation-not-allowed') showToast('Cần BẬT Email/Password trên Firebase!', 'error');
+                else showToast('Lỗi: ' + err.message, 'error');
+            });
+    });
+
     document.getElementById('btn-login-google').addEventListener('click', () => {
         signInWithPopup(auth, googleProvider).catch(err => showToast(err.message, 'error'));
     });
