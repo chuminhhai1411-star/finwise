@@ -1,5 +1,5 @@
 import { db } from './firebase.js';
-import { collection, onSnapshot, addDoc, doc, setDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+import { collection, onSnapshot, addDoc, doc, setDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // Data Models & Constants
 const DEFAULT_CATEGORIES = {
