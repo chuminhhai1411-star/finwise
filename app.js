@@ -764,47 +764,67 @@ const renderReports = () => {
             responsive: true,
             maintainAspectRatio: false,
             cutout: '70%',
-            plugins: {
-                legend: { position: 'right' }
-            }
-        }
-    });
-};
+            const processEmail = (input) => {
+        const str = input.trim();
+        if (str.includes('@')) return str;
+        return str + '@finwise-user.com';
+    };
 
-let isAppInitialized = false;
-
-document.addEventListener('DOMContentLoaded', () => {
     // Auth listeners
     document.getElementById('email-auth-form').addEventListener('submit', (e) => {
         e.preventDefault();
-        const email = document.getElementById('auth-email').value;
+        const rawEmail = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
-        signInWithEmailAndPassword(auth, email, password)
+        const processedEmail = processEmail(rawEmail);
+        
+        signInWithEmailAndPassword(auth, processedEmail, password)
             .then(() => showToast('Đăng nhập thành công!'))
             .catch(err => {
-                showToast('Sai email hoặc mật khẩu!', 'error');
+                if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+                    showToast('Sai tên đăng nhập hoặc mật khẩu!', 'error');
+                } else if (err.code === 'auth/invalid-email') {
+                    showToast('Tên đăng nhập không hợp lệ!', 'error');
+                } else {
+                    showToast('Lỗi Đăng nhập: ' + err.message, 'error');
+                }
                 console.error(err);
             });
     });
 
     document.getElementById('btn-register-email').addEventListener('click', () => {
-        const email = document.getElementById('auth-email').value;
+        const rawEmail = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
-        if (!email || password.length < 6) {
-            showToast('Vui lòng nhập email hợp lệ và mật khẩu ít nhất 6 ký tự', 'error');
+        
+        if (!rawEmail || password.length < 6) {
+            showToast('Vui lòng nhập Tên/Email và mật khẩu từ 6 ký tự trở lên', 'error');
             return;
         }
-        createUserWithEmailAndPassword(auth, email, password)
+        
+        const processedEmail = processEmail(rawEmail);
+
+        createUserWithEmailAndPassword(auth, processedEmail, password)
             .then(() => showToast('Tạo tài khoản thành công!'))
             .catch(err => {
-                if (err.code === 'auth/email-already-in-use') showToast('Email này đã được sử dụng!', 'error');
+                if (err.code === 'auth/email-already-in-use') showToast('Tên đăng nhập hoặc Email này đã tồn tại!', 'error');
                 else if (err.code === 'auth/operation-not-allowed') showToast('Cần BẬT Email/Password trên Firebase!', 'error');
-                else showToast('Lỗi: ' + err.message, 'error');
+                else if (err.code === 'auth/invalid-email') showToast('Tên đăng nhập chứa ký tự không hợp lệ!', 'error');
+                else showToast('Lỗi Đăng ký: ' + err.message, 'error');
             });
     });
 
     document.getElementById('btn-login-google').addEventListener('click', () => {
-        signInWithPopup(auth, googleProvider).catch(err => showToast(err.message, 'error'));
+        signInWithPopup(auth, googleProvider).catch(err => {
+            if (err.code === 'auth/unauthorized-domain') {
+                showToast('Firebase chặn tên miền. Mở Firebase Console -> thêm tên miền vào Authorized domains.', 'error');
+            } else {
+                showToast('Lỗi Google: ' + err.message, 'error');
+            }
+        });
+    });
+
+    document.getElementById('btn-login-facebook').addEventListener('click', () => {
+        signInWithPopup(auth, facebookProvider).catch(err => showToast('Lỗi Facebook: ' + err.message, 'error'));
+    });h(err => showToast(err.message, 'error'));
     });
     document.getElementById('btn-login-facebook').addEventListener('click', () => {
         signInWithPopup(auth, facebookProvider).catch(err => showToast(err.message, 'error'));
@@ -818,7 +838,9 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('main-app').style.display = 'flex';
             
-            document.getElementById('user-display-name').innerText = user.displayName || 'Người dùng';
+            const emailPrefix = user.email ? user.email.split('@')[0] : 'Người dùng';
+            document.getElementById('user-display-name').innerText = user.displayName || emailPrefix;
+            
             if (user.photoURL) {
                 document.getElementById('user-avatar').src = user.photoURL;
             }
