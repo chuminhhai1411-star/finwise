@@ -920,3 +920,24 @@ select option { background: var(--bg-card); color: var(--text-primary); }
         display: none;
     }
 }
+
+/* Login Screen */
+.login-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--bg-dark);
+    z-index: 9999;
+}
+.login-box {
+    width: 100%;
+    max-width: 400px;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+}

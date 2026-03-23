@@ -1,5 +1,6 @@
-import { db } from './firebase.js';
-import { collection, onSnapshot, addDoc, doc, setDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { db, auth, googleProvider, facebookProvider } from './firebase.js';
+import { collection, onSnapshot, addDoc, doc, setDoc, deleteDoc, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 // Data Models & Constants
 const DEFAULT_CATEGORIES = {
@@ -63,11 +64,14 @@ let investments = [];
 let investmentTransactions = [];
 let priceHistory = [];
 
-const initData = () => {
+let currentUserUid = null;
+
+const initData = (uid) => {
+    currentUserUid = uid;
     // Show a loading or empty state temporarily if needed
     
     // Listen to Categories
-    const catDocRef = doc(db, 'settings', 'categories');
+    const catDocRef = doc(db, 'settings', 'categories_' + uid);
     onSnapshot(catDocRef, (snapshot) => {
         if (snapshot.exists()) {
             categories = snapshot.data();
@@ -80,18 +84,19 @@ const initData = () => {
     });
 
     // Listen to Transactions
-    const txQuery = query(collection(db, 'transactions'), orderBy('date', 'desc'));
+    const txQuery = query(collection(db, 'transactions'), where('userId', '==', uid));
     onSnapshot(txQuery, (snapshot) => {
         transactions = [];
         snapshot.forEach((doc) => {
             transactions.push({ ...doc.data(), id: doc.id });
         });
+        transactions.sort((a,b) => new Date(b.date) - new Date(a.date));
         renderDashboard();
         if(document.getElementById('full-history-list')) renderHistory();
     });
     
     // Listen to Investments
-    onSnapshot(collection(db, 'investments'), (snapshot) => {
+    onSnapshot(query(collection(db, 'investments'), where('userId', '==', uid)), (snapshot) => {
         investments = [];
         snapshot.forEach((doc) => {
             investments.push({ ...doc.data(), id: doc.id });
@@ -100,7 +105,7 @@ const initData = () => {
         renderDashboard();
     });
 
-    onSnapshot(collection(db, 'investmentTransactions'), (snapshot) => {
+    onSnapshot(query(collection(db, 'investmentTransactions'), where('userId', '==', uid)), (snapshot) => {
         investmentTransactions = [];
         snapshot.forEach((doc) => {
             investmentTransactions.push({ ...doc.data(), id: doc.id });
@@ -569,6 +574,7 @@ const saveTransaction = () => {
     }
 
     const tx = {
+        userId: currentUserUid,
         type,
         amount,
         category: categoryId,
@@ -765,16 +771,49 @@ const renderReports = () => {
     });
 };
 
+let isAppInitialized = false;
+
 document.addEventListener('DOMContentLoaded', () => {
-    initData();
-    initNavigation();
-    initAddTransaction();
-    initReports();
-    initSettings();
-    initHistory();
-    initCategoriesPage();
-    renderDashboard();
-    renderInvestments();
+    // Auth listeners
+    document.getElementById('btn-login-google').addEventListener('click', () => {
+        signInWithPopup(auth, googleProvider).catch(err => showToast(err.message, 'error'));
+    });
+    document.getElementById('btn-login-facebook').addEventListener('click', () => {
+        signInWithPopup(auth, facebookProvider).catch(err => showToast(err.message, 'error'));
+    });
+    document.getElementById('btn-logout').addEventListener('click', () => {
+        signOut(auth);
+    });
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            
+            document.getElementById('user-display-name').innerText = user.displayName || 'Người dùng';
+            if (user.photoURL) {
+                document.getElementById('user-avatar').src = user.photoURL;
+            }
+
+            initData(user.uid);
+            
+            if (!isAppInitialized) {
+                initNavigation();
+                initAddTransaction();
+                initReports();
+                initSettings();
+                initHistory();
+                initCategoriesPage();
+                isAppInitialized = true;
+            }
+        } else {
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('main-app').style.display = 'none';
+            transactions = [];
+            investments = [];
+            investmentTransactions = [];
+        }
+    });
 });
 
 // Settings logic
@@ -830,6 +869,7 @@ const initSettings = () => {
             const date = new Date(today);
             date.setDate(today.getDate() - Math.floor(Math.random() * 60));
             mockTxs.push({
+                userId: auth.currentUser.uid,
                 type,
                 amount: isExpense ? Math.floor(Math.random() * 1000000) + 50000 : Math.floor(Math.random() * 10000000) + 2000000,
                 category: cat.id,
@@ -972,7 +1012,7 @@ window.deleteCategory = (type, id) => {
 
     if(confirm('Xoá danh mục này?')) {
         categories[type] = categories[type].filter(c => c.id !== id);
-        setDoc(doc(db, 'settings', 'categories'), categories).then(() => {
+        setDoc(doc(db, 'settings', 'categories_' + currentUserUid), categories).then(() => {
             renderCategoriesManager();
             showToast('Đã xoá danh mục.');
         }).catch(err => {
